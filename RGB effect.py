@@ -83,7 +83,7 @@ def rgb_split_channels_alpha(surface_ : pygame.Surface) -> pygame.Surface:
     B = rgb_array[:, :, :].copy()
     B[:, :, 0:2] = 0
     B = numpy.dstack((B, alpha_array))
-    # RETURN RGB, NO ALPHA VALUES
+    # RETURN RGB
     return  make_surface(R),\
         make_surface(G),\
         make_surface(B)

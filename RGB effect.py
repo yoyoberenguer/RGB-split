@@ -1,13 +1,14 @@
 # encoding: utf-8
 
-import numpy, sys
+import numpy, sys, os
 import random
 
 try:
     import pygame
+    from pygame import freetype
 except ImportError:
-    print("\n<Pygame> library is missing on your system."
-          "\nTry: \n   C:\\pip install pygame on a window command prompt.")
+    raise ImportError("\n<Pygame> library is missing on your system."
+                      "\nTry: \n   C:\\pip install pygame on a window command prompt.")
 
 
 def make_array(rgb_array_: numpy.ndarray, alpha_: numpy.ndarray) -> numpy.ndarray:
@@ -43,8 +44,7 @@ def make_surface(rgba_array: numpy.ndarray) -> pygame.Surface:
                                    (rgba_array.shape[:2][0], rgba_array.shape[:2][1]), 'RGBA').convert_alpha()
 
 
-
-def rgb_split_channels_alpha(surface_ : pygame.Surface) -> pygame.Surface:
+def rgb_split_channels_alpha(surface_: pygame.Surface) -> pygame.Surface:
     """
         Extract channels RGBA of a pygame.Surface 32-24 bit and return
         Red channel, green channel and blue channel (all pygame surfaces)
@@ -59,37 +59,36 @@ def rgb_split_channels_alpha(surface_ : pygame.Surface) -> pygame.Surface:
     
     """
     assert isinstance(surface_, pygame.Surface), \
-           'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
+        'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
     rgb_array = pygame.surfarray.pixels3d(surface_)
     
     try:
         alpha_array = pygame.surfarray.pixels_alpha(surface_)
-    except ValueError as e:
+    except ValueError:
         # unsupported colormasks for alpha reference array
         print('Unsupported colormasks for alpha reference array.')
         raise ValueError('\nMake sure the surface_ contains per-pixel alpha transparency values.')
-        
-    
+
     # RED CHANNEL
-    R = rgb_array[:, :, :].copy()
-    R[:, :, 1:3] = 0
-    R = numpy.dstack((R, alpha_array))
+    red = rgb_array[:, :, :].copy()
+    red[:, :, 1:3] = 0
+    red = numpy.dstack((red, alpha_array))
     # GREEN CHANNEL 
-    G = rgb_array[:, :, :].copy()
-    G[:, :, 0] = 0
-    G[:, :, 2] = 0
-    G = numpy.dstack((G, alpha_array))
+    green = rgb_array[:, :, :].copy()
+    green[:, :, 0] = 0
+    green[:, :, 2] = 0
+    green = numpy.dstack((green, alpha_array))
     # BLUE CHANNEL 
-    B = rgb_array[:, :, :].copy()
-    B[:, :, 0:2] = 0
-    B = numpy.dstack((B, alpha_array))
-    # RETURN RGB
-    return  make_surface(R),\
-        make_surface(G),\
-        make_surface(B)
+    blue = rgb_array[:, :, :].copy()
+    blue[:, :, 0:2] = 0
+    blue = numpy.dstack((blue, alpha_array))
+    # RETURN RGB, NO ALPHA VALUES
+    return make_surface(red),\
+        make_surface(green),\
+        make_surface(blue)
 
 
-def rgb_split_channels(surface_ : pygame.Surface) -> pygame.Surface:
+def rgb_split_channels(surface_: pygame.Surface) -> pygame.Surface:
     """
         Extract channels RGB of a pygame.Surface 32-24 bits and return
         Red channel, green channel and blue channel as pygame surfaces
@@ -103,22 +102,22 @@ def rgb_split_channels(surface_ : pygame.Surface) -> pygame.Surface:
     
     """
     assert isinstance(surface_, pygame.Surface), \
-           'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
+        'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
     rgb_array = pygame.surfarray.pixels3d(surface_)
     # RED CHANNEL
-    R = rgb_array[:, :, :].copy()
-    R[:, :, 1:3] = 0
+    red = rgb_array[:, :, :].copy()
+    red[:, :, 1:3] = 0
     # GREEN CHANNEL 
-    G = rgb_array[:, :, :].copy()
-    G[:, :, 0] = 0
-    G[:, :, 2] = 0
+    green = rgb_array[:, :, :].copy()
+    green[:, :, 0] = 0
+    green[:, :, 2] = 0
     # BLUE CHANNEL 
-    B = rgb_array[:, :, :].copy()
-    B[:, :, 0:2] = 0
+    blue = rgb_array[:, :, :].copy()
+    blue[:, :, 0:2] = 0
     # RETURN RGB, NO ALPHA VALUES
-    return  pygame.surfarray.make_surface(R),\
-        pygame.surfarray.make_surface(G),\
-        pygame.surfarray.make_surface(B)
+    return pygame.surfarray.make_surface(red),\
+        pygame.surfarray.make_surface(green),\
+        pygame.surfarray.make_surface(blue)
 
     
 def red_channel(surface_: pygame.Surface) -> pygame.Surface:
@@ -128,7 +127,7 @@ def red_channel(surface_: pygame.Surface) -> pygame.Surface:
       :return pygame.Surface: return a pygame surface (red channel)
     """
     assert isinstance(surface_, pygame.Surface),\
-           'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
+        'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
     rgba_array = pygame.surfarray.pixels3d(surface_)
     rgba_array[:, :, 1:3] = 0
     return pygame.surfarray.make_surface(rgba_array)
@@ -141,7 +140,7 @@ def green_channel(surface_: pygame.Surface) -> pygame.Surface:
       :return pygame.Surface: return a pygame surface (green channel)
     """
     assert isinstance(surface_, pygame.Surface), \
-           'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_) 
+        'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
     rgba_array = pygame.surfarray.pixels3d(surface_)
     rgba_array[:, :, 0] = 0
     rgba_array[:, :, 2] = 0
@@ -155,7 +154,7 @@ def blue_channel(surface_: pygame.Surface) -> pygame.Surface:
       :return pygame.Surface: return a pygame surface (blue channel)
     """
     assert isinstance(surface_, pygame.Surface), \
-           'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
+        'Positional argument surface_ must be a pygame.Surface, got %s ' % type(surface_)
     rgba_array = pygame.surfarray.pixels3d(surface_)
     rgba_array[:, :, 0:2] = 0
     return pygame.surfarray.make_surface(rgba_array)
@@ -165,17 +164,25 @@ if __name__ == '__main__':
     numpy.set_printoptions(threshold=sys.maxsize)
     pygame.init()
     SCREENRECT = pygame.Rect(0, 0, 800, 800)
+    FONT = freetype.Font(os.path.join('Assets\\Fonts\\', 'Gtek Technology.ttf'), size=25)
+    FONT.antialiased = True
+
     screen = pygame.display.set_mode(SCREENRECT.size, pygame.HWSURFACE, 32)
     BACKGROUND = pygame.image.load('Assets\\Background.jpg').convert()
     BACKGROUND = pygame.transform.smoothscale(BACKGROUND, SCREENRECT.size)
 
     IMAGE = pygame.image.load('Assets\\Namiko1.png').convert_alpha()
 
-    #red_surface = red_channel(IMAGE.copy())
-    #green_surface = green_channel(IMAGE.copy())
-    #blue_surface = blue_channel(IMAGE.copy())
+    # red_surface = red_channel(IMAGE.copy())
+    # green_surface = green_channel(IMAGE.copy())
+    # blue_surface = blue_channel(IMAGE.copy())
 
     red_surface, green_surface, blue_surface = rgb_split_channels_alpha(IMAGE)
+
+    # surface, rect = FONT.render('rgb split effect', fgcolor=(255, 255, 255),
+    #                             bgcolor=None, style=freetype.STYLE_STRONG, rotation=0, size=25)
+    #
+    # red_surface, green_surface, blue_surface = rgb_split_channels_alpha(surface)
 
     All = pygame.sprite.Group()
     clock = pygame.time.Clock()
@@ -193,8 +200,8 @@ if __name__ == '__main__':
 
     while not STOP_GAME:
         pygame.event.pump()
-        #screen.fill((0, 0, 0, 0))
-        screen.blit(BACKGROUND, (0, 0))
+        screen.fill((0, 0, 0, 0))
+        # screen.blit(BACKGROUND, (0, 0))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -212,7 +219,11 @@ if __name__ == '__main__':
         screen.blit(blue_surface, org + pygame.math.Vector2(random.randint(15, 25),
                                                             random.randint(0, 25)), special_flags=pygame.BLEND_RGB_ADD)
 
-        TIME_PASSED_SECONDS = clock.tick(300)
+        # screen.blit(red_surface, org, special_flags=pygame.BLEND_RGB_ADD)
+        # screen.blit(green_surface, org + pygame.math.Vector2(10, 10), special_flags=pygame.BLEND_RGB_ADD)
+        # screen.blit(blue_surface, org + pygame.math.Vector2(20, 20), special_flags=pygame.BLEND_RGB_ADD)
+
+        TIME_PASSED_SECONDS = clock.tick(60)
 
         pygame.display.flip()
         FRAME += 1

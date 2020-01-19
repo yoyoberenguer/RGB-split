@@ -1,5 +1,9 @@
 # RGB-split
 RGB split effect 
+
+![alt text](https://github.com/yoyoberenguer/RGB-split/blob/master/im160x360.png)
+![alt text](https://github.com/yoyoberenguer/RGB-split/blob/master/splitRGB.png)
+
 ```
 Split R, G, B channels from a PNG file (loaded with pygame)
 
